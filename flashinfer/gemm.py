@@ -927,7 +927,22 @@ def gen_gemm_sm100_module_tgv(dtype: torch.dtype = torch.bfloat16) -> JitSpec:
     return gen_jit_spec(
         module_name,
         source_paths,
-        extra_cuda_cflags=sm100a_nvcc_flags,
+        extra_cuda_cflags=[
+            "-std=c++20",
+            "-O3",
+            "-lineinfo",
+            "-DCUDA_PTX_FP8_F2FP_ENABLED",
+            "-DENABLE_BF16",
+            "-DCUTLASS_VERSIONS_GENERATED",
+            "-DCUTLASS_ENABLE_TENSOR_CORE_MMA=1",
+            "--expt-relaxed-constexpr",
+            "-DCUTE_USE_PACKED_TUPLE=1",
+            "-DCUTLASS_TEST_LEVEL=0",
+            "-DCUTLASS_TEST_ENABLE_CACHED_RESULTS=1",
+            "-DCUTLASS_CONV_UNIT_TEST_RIGOROUS_SIZE_ENABLED=1",
+            "-DCUTLASS_ENABLE_GDC_FOR_SM100=1",
+        ]
+        + sm100a_nvcc_flags,
         extra_include_paths=[
             jit_env.FLASHINFER_INCLUDE_DIR,
             jit_env.FLASHINFER_CSRC_DIR,
@@ -1002,7 +1017,7 @@ def tgv_gemm_sm100(
         pdl: Whether to use PDL (persistent data loader), defaults to False
 
     Returns:
-        Output tensor of shape (M, N)
+        Output tensor of shape (M, N) in row-major layout
 
     Supported dtypes:
         - torch.bfloat16

@@ -146,6 +146,10 @@ at::Tensor tgv_gemm(at::Tensor const& mat1, at::Tensor const& mat2, std::optiona
   int K = mat1.size(1);
   int N = mat2.size(1);
 
+  TORCH_CHECK(
+      int64_t(M) * N * mat1.element_size() < std::numeric_limits<int32_t>::max(),
+      "TMA plane stride (M * N * element_size) exceeds INT32_MAX; tensor too large for TMA");
+
   // validity check for bias
   if (bias.has_value()) {
     TORCH_CHECK(bias.value().is_cuda(), "Bias tensor must be on CUDA");
